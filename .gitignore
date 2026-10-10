@@ -1,0 +1,40 @@
+# Recordings, transcripts, and every generated artifact live under data/.
+# They are never committed. Only the empty input folder marker is tracked.
+data/*
+!data/input/
+data/input/*
+!data/input/.gitkeep
+
+# Downloaded model weights and caches
+model/
+models/
+pretrained_models/
+.cache/
+
+# Local configuration
+.env
+*.local
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.venv/
+.venv-*/
+
+# Editors and OS
+.vscode/
+.idea/
+.DS_Store
+*.swp
+
+# Logs
+*.log
+
+# AI assistant instructions and notes (local only)
+CLAUDE.md
+AGENTS.md
+.claude/
+.codex/
+.agents/

@@ -1,0 +1,13 @@
+cff-version: 1.2.0
+message: "If you use Mediscribe in your work, please cite it."
+title: "Mediscribe: speaker-attributed transcription of clinical consultations"
+type: software
+version: 2.0.0
+date-released: 2026-10-09
+authors:
+  - family-names: Liu
+    given-names: Bill
+  - family-names: Yang
+    given-names: Lexi
+  - family-names: Hong
+    given-names: Chuan

@@ -1,0 +1,32 @@
+# Conda environment for the Mediscribe pipeline and its resident worker.
+#
+#   conda env create -f environment.yml      # first time
+#   conda env update -f environment.yml --prune
+#
+# Only the pipeline needs this environment. The WebUI server itself runs on any
+# Python 3.10+ with the standard library; it starts the pipeline worker inside
+# this environment automatically (see src/WebUI/README.md).
+#
+# The pinned torch/torchaudio builds target CUDA 12.8 wheels. Pick another
+# build from https://pytorch.org/get-started/locally/ for a different CUDA or
+# a CPU-only machine (the pipeline runs on CPU, slowly).
+name: scribe
+channels:
+  - conda-forge
+dependencies:
+  - python=3.10
+  - pip
+  - ffmpeg>=6          # audio decoding for every input format
+  - libsndfile
+  - pysoundfile>=0.12
+  - numpy>=2.0,<3
+  - pip:
+      - --extra-index-url https://download.pytorch.org/whl/cu128
+      - torch==2.10.0+cu128
+      - torchaudio==2.10.0+cu128   # MMS forced aligner (torchaudio.pipelines.MMS_FA)
+      - openai-whisper>=20250625   # ASR engine A
+      - onnx-asr>=0.12             # ASR engine B: Parakeet-TDT-0.6B-v3 over ONNX Runtime
+      - onnxruntime>=1.20          # CPU provider; install onnxruntime-gpu to opt into CUDA
+      - silero-vad>=5.1            # speech regions for the non-speech guard
+      - pyannote.audio>=4.0,<5     # speaker-diarization-community-1
+      - huggingface-hub>=0.30      # model downloads (gated repos need a token)

@@ -1,0 +1,51 @@
+{
+  "roles": [
+    {
+      "name": "Clinician",
+      "aliases": [
+        "doctor"
+      ],
+      "description": "The clinician who first takes the history, examines the patient, or gives clinical advice."
+    },
+    {
+      "name": "Clinician2",
+      "aliases": [
+        "clinician 2",
+        "second clinician",
+        "supervising clinician",
+        "supervisor"
+      ],
+      "description": "A second clinician who joins the consultation. Use order of appearance to distinguish clinicians."
+    },
+    {
+      "name": "Patient",
+      "aliases": [],
+      "description": "The person receiving care and describing their own symptoms."
+    },
+    {
+      "name": "Patient's Family",
+      "aliases": [
+        "patients family",
+        "family"
+      ],
+      "description": "A relative or companion speaking about the patient."
+    },
+    {
+      "name": "Medical Staff",
+      "aliases": [
+        "staff",
+        "nurse"
+      ],
+      "description": "A person handling scheduling, room setup, equipment, or other logistics. Assign clinical discussion to a clinician."
+    }
+  ],
+  "instructions": "Identify exactly one patient and at least one clinician. Consultations may include several clinicians. Every person needs substantive evidence from the conversation.",
+  "required_roles": [
+    "Patient",
+    "Clinician"
+  ],
+  "ordered_roles": [
+    "Clinician",
+    "Clinician2"
+  ]
+}

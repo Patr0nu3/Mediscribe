@@ -1,0 +1,326 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Mediscribe: review speaker-attributed clinical consultation transcripts.">
+    <meta name="theme-color" content="#157a6e">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23157a6e'/%3E%3Cpath d='M7 20V12M11 23V9M15 18v-4M19 24V8M23 21V11M27 18v-4' stroke='%23fff' stroke-width='2.6' stroke-linecap='round'/%3E%3C/svg%3E">
+    <title>Mediscribe Editor</title>
+    <link rel="stylesheet" href="/styles.css">
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <div class="brand-block">
+          <div class="brand">Mediscribe</div>
+          <div class="brand-subtitle">Transcript Editor</div>
+        </div>
+        <input id="audioImport" class="hidden-file-input" type="file" accept="audio/*,.m4a,.mp3,.wav,.flac,.aac,.ogg,.webm,.mp4" multiple>
+      </header>
+
+      <nav class="app-tabs" aria-label="Mediscribe workspace">
+        <button class="tab-button active" type="button" data-tab="dashboard">Dashboard</button>
+        <button class="tab-button" type="button" data-tab="processing">Processing</button>
+        <button class="tab-button" type="button" data-tab="review" hidden>Review</button>
+        <button class="tab-button" type="button" data-tab="revisions" hidden>Diff</button>
+        <button class="tab-button" type="button" data-tab="settings">Settings</button>
+      </nav>
+
+      <main class="tab-shell">
+        <section id="dashboardView" class="tab-view dashboard-view">
+          <div class="view-header">
+            <div>
+              <h1>Recordings</h1>
+            </div>
+            <div id="dashboardStats" class="dashboard-stats" aria-label="Recording summary"></div>
+          </div>
+          <div class="dashboard-actions">
+            <button id="importAudioButton" class="primary-button" type="button">Import Audio</button>
+            <button id="selectAllRecordings" type="button">Select All</button>
+            <button id="clearRecordingSelection" type="button">Clear Selection</button>
+            <button id="runSelectedRecordings" type="button">Run Selected</button>
+            <button id="reprocessSelectedRecordings" type="button">Reprocess Selected</button>
+            <button id="exportAllFinished" type="button">Export Selected</button>
+            <button id="refreshSessions" type="button">Refresh</button>
+            <button id="clearCache" class="danger-button" type="button">Clear Selected</button>
+          </div>
+          <div id="recordingTable" class="recording-table" role="table" aria-label="Recordings"></div>
+          <div id="dashboardEmpty" class="empty-state onboarding" hidden>
+            <strong>No recordings yet</strong>
+            <p>Import an audio recording to begin.</p>
+            <button id="importAudioEmpty" class="primary-button" type="button">Import Audio</button>
+          </div>
+        </section>
+
+        <section id="processingView" class="tab-view processing-view" hidden>
+          <div class="view-header">
+            <div>
+              <h1>Processing</h1>
+            </div>
+            <div class="processing-actions">
+              <button id="runInputFolder" class="primary-button" type="button">Run All Unprocessed</button>
+              <button id="reprocessSelectedInProcessing" type="button">Reprocess Selected</button>
+              <button id="releaseWorker" type="button" title="Unload Whisper, pyannote, and Parakeet to free GPU memory">Release Models</button>
+            </div>
+          </div>
+          <section id="pipelinePanel" class="pipeline-panel">
+            <span id="pipelineStatus" class="pipeline-status">Pipeline idle</span>
+            <div id="pipelineLanes" class="pipeline-lanes" aria-label="Pipeline lanes">
+              <div class="lane" id="laneWorker">
+                <span class="lane-name">Models</span>
+                <span class="lane-value" id="laneWorkerText">Not loaded</span>
+              </div>
+              <div class="lane" id="laneAudio">
+                <span class="lane-name">Audio</span>
+                <span class="lane-value" id="laneAudioText">Idle</span>
+              </div>
+              <div class="lane" id="laneLlm">
+                <span class="lane-name">LLM</span>
+                <span class="lane-value" id="laneLlmText">Idle</span>
+              </div>
+            </div>
+          </section>
+          <div class="processing-grid">
+            <section class="processing-card">
+              <h2>Recordings</h2>
+              <div id="processingBacklogList" class="backlog-list"></div>
+            </section>
+            <section class="processing-card">
+              <h2>Files</h2>
+              <div id="pipelineFileGrid" class="file-grid" role="list" aria-label="Recordings in the pipeline"></div>
+            </section>
+            <section class="processing-card">
+              <div class="card-head">
+                <h2>Log</h2>
+                <select id="pipelineLogFilter" class="log-filter" title="Show log lines for one file">
+                  <option value="">All files</option>
+                </select>
+              </div>
+              <div id="pipelineLogList" class="pipeline-log-list"></div>
+            </section>
+          </div>
+        </section>
+
+        <section id="reviewView" class="tab-view workspace" hidden>
+          <section class="editor-panel">
+            <div class="review-header">
+              <div>
+                <h1>Review</h1>
+                <p id="reviewRecordingName">No recording loaded</p>
+              </div>
+              <div class="review-actions">
+                <button id="saveButton" class="primary-button" title="Save corrected transcript">Save</button>
+                <button id="toggleFinished" title="Mark current transcript as finished">Finish</button>
+                <button id="exportTranscript" title="Export the final aligned transcript">Export</button>
+                <button id="showRevisions" title="Show before and after revision snapshots">Diff</button>
+              </div>
+            </div>
+            <div class="editor-toolbar">
+              <div class="toolbar-group speaker-group">
+                <select id="activeSpeaker" class="hidden-control" hidden></select>
+                <button id="openSpeakerDialog" title="Add, rename, or apply speaker changes with options">Speaker Tools</button>
+                <button id="openBulkDialog" title="Change or delete selected turns">Bulk Change</button>
+                <button id="toggleTurnSelectionMode" title="Show turn selection controls">Select</button>
+                <button id="selectVisibleTurns" title="Select every visible turn" hidden>Select All</button>
+                <button id="clearTurnSelection" title="Clear selected turns" hidden>Clear</button>
+              </div>
+              <div class="toolbar-group bookmark-group">
+                <button id="nextBookmark" title="Go to next bookmarked turn (mark with M)">Next Mark</button>
+                <button id="showBookmarks" title="Show only bookmarked turns" hidden>Only Marks</button>
+              </div>
+              <div class="toolbar-group search-group">
+                <input id="searchInput" class="search-input" type="search" placeholder="Search">
+                <input id="replaceInput" class="search-input" type="text" placeholder="Replace">
+                <button id="searchPrev" title="Previous match">Prev</button>
+                <button id="searchNext" title="Next match">Next</button>
+                <button id="replaceOne" title="Replace current match">Replace</button>
+                <button id="replaceAll" title="Replace every match">All</button>
+                <span id="searchCount" class="search-count" hidden>0</span>
+              </div>
+            </div>
+            <div id="turnList" class="turn-list"></div>
+          </section>
+
+          <aside class="timeline-panel">
+            <section class="transport-card" aria-label="Playback controls">
+              <audio id="audioPlayer" class="native-audio-player" controls preload="metadata"></audio>
+              <div class="transport-row">
+                <button id="jumpBack10" class="transport-button" type="button" title="Jump back 10 seconds">Back 10s</button>
+                <button id="playPauseButton" class="primary-button transport-play" type="button" title="Play or pause audio">Play</button>
+                <button id="jumpForward10" class="transport-button" type="button" title="Jump forward 10 seconds">Forward 10s</button>
+              </div>
+              <div class="time-row">
+                <span id="currentTimeLabel">00:00</span>
+                <span id="durationLabel">00:00</span>
+              </div>
+              <canvas id="timelineCanvas" class="timeline-canvas" aria-label="Audio timeline"></canvas>
+              <label class="speed-control">
+                <span>Speed</span>
+                <input id="speedSlider" type="range" min="0.5" max="2" step="0.25" value="1" title="Playback speed">
+                <strong id="speedValue">1.00x</strong>
+              </label>
+            </section>
+            <section class="review-meta-card" aria-label="Review position">
+              <div class="turn-progress" title="Position of the active turn in the transcript">
+                <div id="turnProgressCircle" class="turn-progress-circle">
+                  <span id="turnProgressText">0/0</span>
+                </div>
+                <div class="turn-progress-copy">
+                  <strong id="turnProgressLabel">No turn selected</strong>
+                  <span id="turnProgressHint">Click a turn or press Play</span>
+                </div>
+              </div>
+              <div id="selectionMeta" class="selection-meta" hidden>
+                <div class="selection-head">
+                  <span id="selectionRole" class="selection-role">Unknown</span>
+                  <span id="selectionRange" class="selection-range">00:00 – 00:00</span>
+                </div>
+                <dl id="selectionFacts" class="selection-facts"></dl>
+                <div id="selectionFlags" class="selection-flags" hidden></div>
+              </div>
+              <div class="review-summary" aria-label="Speakers in this recording">
+                <div class="review-summary-head">
+                  <span>Speakers</span>
+                  <span id="reviewSummaryTotals"></span>
+                </div>
+                <div id="speakerSummary" class="speaker-summary"></div>
+              </div>
+            </section>
+          </aside>
+        </section>
+
+        <section id="revisionsView" class="tab-view revisions-view" hidden>
+          <div class="view-header">
+            <div>
+              <h1>Diff</h1>
+              <p id="diffRecordingName">No recording loaded</p>
+            </div>
+            <div class="revision-actions">
+              <button id="restoreRevisionBefore" type="button" disabled>Restore Left</button>
+              <button id="restoreRevisionAfter" type="button" disabled>Restore Right</button>
+            </div>
+          </div>
+          <section id="revisionPanel" class="revision-panel">
+            <aside class="revision-sidebar">
+              <div class="revision-header">Saves</div>
+              <div id="revisionList" class="revision-list"></div>
+            </aside>
+            <div class="revision-compare">
+              <div id="revisionBefore" class="revision-side revision-before"></div>
+              <div id="revisionAfter" class="revision-side revision-after"></div>
+            </div>
+          </section>
+        </section>
+
+        <section id="settingsView" class="tab-view settings-view" hidden>
+          <div class="view-header">
+            <div>
+              <h1>Settings</h1>
+            </div>
+          </div>
+          <div class="settings-grid">
+            <section class="settings-card">
+              <h2>Playback During Editing</h2>
+              <label class="settings-row">
+                <span>Role menu behavior</span>
+                <select id="settingRoleMenuBehavior">
+                  <option value="slow">Slow audio</option>
+                  <option value="pause">Pause audio</option>
+                  <option value="none">Keep current speed</option>
+                </select>
+              </label>
+              <label class="settings-row">
+                <span>Slow speed</span>
+                <input id="settingSlowSpeed" type="range" min="0.25" max="1" step="0.05" value="0.5">
+                <strong id="settingSlowSpeedValue">0.50x</strong>
+              </label>
+            </section>
+            <section class="settings-card">
+              <h2>Review Interaction</h2>
+              <label class="check-label">
+                <input id="settingClickTurnPlays" type="checkbox" checked>
+                Play audio after clicking a turn row
+              </label>
+              <label class="check-label">
+                <input id="settingWordClickPlays" type="checkbox" checked>
+                Play from a word when clicked
+              </label>
+              <label class="check-label">
+                <input id="settingFollowAudioTurn" type="checkbox" checked>
+                Keep active turn synced to playback
+              </label>
+              <label class="check-label">
+                <input id="settingTextEditSlowsAudio" type="checkbox" checked>
+                Slow audio while editing text
+              </label>
+              <label class="check-label">
+                <input id="settingWordDragSlowsAudio" type="checkbox" checked>
+                Slow audio while dragging words
+              </label>
+              <label class="check-label">
+                <input id="settingShowMergeButtons" type="checkbox">
+                Show merge buttons on turns
+              </label>
+              <label class="settings-row">
+                <span>Visual sync offset</span>
+                <input id="settingVisualLatency" type="range" min="0" max="0.5" step="0.01" value="0.2">
+                <strong id="settingVisualLatencyValue">0.20s</strong>
+              </label>
+              <label class="settings-row">
+                <span>Auto-scroll delay</span>
+                <input id="settingAutoScrollDelay" type="range" min="0" max="2" step="0.05" value="0.65">
+                <strong id="settingAutoScrollDelayValue">0.65s</strong>
+              </label>
+              <label class="settings-row">
+                <span>Autosave checkpoints</span>
+                <input id="settingAutosaveMinutes" type="number" min="1" max="30" step="1" value="5">
+                <strong>min</strong>
+              </label>
+            </section>
+            <section class="settings-card shortcut-card">
+              <h2>Shortcuts</h2>
+              <label class="check-label">
+                <input id="settingSpaceTogglesPlayback" type="checkbox" checked>
+                Spacebar toggles playback when focus is outside text fields
+              </label>
+              <div class="shortcut-list" aria-label="Review shortcuts">
+                <div><kbd>Q</kbd><span>Play previous turn</span></div>
+                <div><kbd>W</kbd><span>Select hovered turn</span></div>
+                <div><kbd>E</kbd><span>Play next turn</span></div>
+                <div><kbd>M</kbd><span>Bookmark hovered or active turn</span></div>
+                <div><kbd>N</kbd><span>Start, then end, an unrelated (non-medical) section; on a marked turn, unmark its section</span></div>
+                <div><kbd>X</kbd><span>Start, then end, a span of turns to delete (undo with Ctrl+Z)</span></div>
+                <div><kbd>Esc</kbd><span>Cancel a pending unrelated start or deletion</span></div>
+                <div><kbd>Tab</kbd><span>Outside a text field, switch the active turn to the next speaker</span></div>
+                <div><kbd>Shift</kbd><kbd>Tab</kbd><span>Same, toward the previous speaker</span></div>
+                <div><kbd>Enter</kbd><span>Split turn at cursor</span></div>
+                <div><kbd>A</kbd><span>Move hovered word bar and words before it to previous turn</span></div>
+                <div><kbd>S</kbd><span>Split at hovered word bar into a new turn</span></div>
+                <div><kbd>D</kbd><span>Move hovered word bar and words after it to next turn</span></div>
+                <div><kbd>Shift</kbd><kbd>Enter</kbd><span>Split line inside the same turn</span></div>
+                <div><kbd>Ctrl/Cmd</kbd><kbd>S</kbd><span>Save</span></div>
+                <div><kbd>Ctrl/Cmd</kbd><kbd>Z</kbd><span>Undo</span></div>
+                <div><kbd>Ctrl/Cmd</kbd><kbd>Y</kbd><span>Redo</span></div>
+              </div>
+            </section>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <div id="modalBackdrop" class="modal-backdrop" hidden>
+      <section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+        <h2 id="modalTitle">Confirm Action</h2>
+        <p id="modalMessage"></p>
+        <div id="modalBody" class="modal-body" hidden></div>
+        <div class="modal-actions">
+          <button id="modalCancel" type="button">Cancel</button>
+          <button id="modalConfirm" class="primary-button" type="button">Continue</button>
+        </div>
+      </section>
+    </div>
+
+    <script src="/app.js"></script>
+  </body>
+</html>

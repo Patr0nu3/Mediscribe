@@ -1,0 +1,160 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1380 1694" role="img" aria-labelledby="title desc">
+<title id="title">Mediscribe pipeline</title>
+<desc id="desc">Prepared audio feeds transcription and speaker detection. Word and speaker results are combined, assigned clinical roles through an LLM endpoint, and exported as text and JSON for review.</desc>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#6e7781"/></marker></defs>
+<rect width="1380" height="1694" fill="#ffffff"/>
+<rect x="500.0" y="44.0" width="380.0" height="188.0" rx="14" fill="#ffffff" stroke="#a6d4cb" stroke-width="1.6"/>
+<rect x="518.0" y="29.0" width="83.9" height="30.0" rx="15" fill="#157a6e" stroke="#157a6e" stroke-width="1.2"/>
+<text x="559.9" y="49.5" font-family="Inter, -apple-system, &#x27;Segoe UI&#x27;, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="700" fill="#ffffff" text-anchor="middle" letter-spacing="0.3">Prepare</text>
+<rect x="524.0" y="96.0" width="332.0" height="112.0" rx="10" fill="#f6f8fa" stroke="#d0d7de" stroke-width="1.2"/>
+<text x="690.0" y="127.5" font-family="Inter, -apple-system, &#x27;Segoe UI&#x27;, Roboto, Helvetica, Arial, sans-serif" font-size="18" font-weight="600" fill="#1f2328" text-anchor="middle">Decode and resample (FFmpeg)</text>
+<text x="690.0" y="148.9" font-family="Inter, -apple-system, &#x27;Segoe UI&#x27;, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="400" fill="#57606a" text-anchor="middle">Keep original PCM</text>
+<text x="690.0" y="168.9" font-family="Inter, -apple-system, &#x27;Segoe UI&#x27;, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="400" fill="#57606a" text-anchor="middle">Resample to mono 16 kHz</text>
+<text x="690.0" y="188.9" font-family="Inter, -apple-system, &#x27;Segoe UI&#x27;, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="400" fill="#57606a" text-anchor="middle">Time base and file hashes</text>
+<rect x="220.0" y="106.0" width="220.0" height="92.0" rx="10" fill="#f6f8fa" stroke="#d0d7de" stroke-width="1.2"/>
+<text x="330.0" y="137.5" font-family="Inter, -apple-system, &#x27;Segoe UI&#x27;, Roboto, Helvetica, Arial, sans-serif" font-size="18" font-weight="600" fill="#1f2328" text-anchor="middle">Input audio</text>
+<text x="330.0" y="158.9" font-family="Inter, -apple-system, &#x27;Segoe UI&#x27;, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="400" fill="#57606a" text-anchor="middle">Consultation recording</text>
+<text x="330.0" y="178.9" font-family="Inter, -apple-system, &#x27;Segoe UI&#x27;, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="400" fill="#57606a" text-anchor="middle">WAV, M4A, MP3…</text>
+<polyline points="440.0,152.0 500.0,152.0" fill="none" stroke="#6e7781" stroke-width="2" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<polyline points="690.0,232.0 690.0,308.0 514.0,308.0 514.0,336.0" fill="none" stroke="#6e7781" stroke-width="2" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<polyline points="690.0,308.0 1182.0,308.0 1182.0,336.0" fill="none" stroke="#6e7781" stroke-width="2" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<rect x="601.4" y="242.0" width="177.2" height="60.0" rx="12" fill="#e7f4f1" stroke="#a6d4cb" stroke-width="1.2"/>
+<text x="690.0" y="266.3" font-family="Inter, -apple-system, &#x27;Segoe UI&#x27;, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="600" fill="#157a6e" text-anchor="middle">16 kHz mono audio</text>
+<text x="690.0" y="288.3" font-family="Inter, -apple-system, &#x27;Segoe UI&#x27;, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="400" fill="#57606a" text-anchor="middle">Common time base</text>
+<rect x="36.0" y="336.0" width="956.0" height="396.0" rx="14" fill="#ffffff" stroke="#a6d4cb" stroke-width="1.6"/>
+<rect x="54.0" y="321.0" width="105.4" height="30.0" rx="15" fill="#157a6e" stroke="#157a6e" stroke-width="1.2"/>
+<text x="106.7" y="341.5" font-family="Inter, -apple-system, &#x27;Segoe UI&#x27;, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="700" fill="#ffffff" text-anchor="middle" letter-spacing="0.3">Transcribe</text>
+<rect x="56.0" y="388.0" width="208.0" height="140.0" rx="10" fill="#f6f8fa" stroke="#d0d7de" stroke-width="1.2"/>
+<text x="160.0" y="443.5" font-family="Inter, -apple-system, &#x27;Segoe UI&#x27;, Roboto, Helvetica, Arial, sans-serif" font-size="18" font-weight="600" fill="#1f2328" text-anchor="middle">Whisper ASR</text>
+<text x="160.0" y="464.9" font-family="Inter, -apple-system, &#x27;Segoe UI&#x27;, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="400" fill="#57606a" text-anchor="middle">Full-length transcription</text>
+<text x="160.0" y="484.9" font-family="Inter, -apple-system, &#x27;Segoe UI&#x27;, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="400" fill="#57606a" text-anchor="middle">Text and word timings</text>
+<rect x="292.0" y="388.0" width="208.0" height="140.0" rx="10" fill="#f6f8fa" stroke="#d0d7de" stroke-width="1.2"/>
+<text x="396.0" y="432.0" font-family="Inter, -apple-system, &#x27;Segoe UI&#x27;, Roboto, Helvetica, Arial, sans-serif" font-size="18" font-weight="600" fill="#1f2328" text-anchor="middle">Forced alignment</text>
+<text x="396.0" y="455.0" font-family="Inter, -apple-system, &#x27;Segoe UI&#x27;, Roboto, Helvetica, Arial, sans-serif" font-size="18" font-weight="600" fill="#1f2328" text-anchor="middle">(MMS)</text>
+<text x="396.0" y="476.4" font-family="Inter, -apple-system, &#x27;Segoe UI&#x27;, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="400" fill="#57606a" text-anchor="middle">Word-level timestamps</text>
+<text x="396.0" y="496.4" font-family="Inter, -apple-system, &#x27;Segoe UI&#x27;, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="400" fill="#57606a" text-anchor="middle">Optional</text>
+<rect x="528.0" y="388.0" width="208.0" height="140.0" rx="10" fill="#f6f8fa" stroke="#d0d7de" stroke-width="1.2"/>
+<text x="632.0" y="413.5" font-family="Inter, -apple-system, &#x27;Segoe UI&#x27;, Roboto, Helvetica, Arial, sans-serif" font-size="18" font-weight="600" fill="#1f2328" text-anchor="middle">Two-pass merge</text>
+<text x="632.0" y="434.9" font-family="Inter, -apple-system, &#x27;Segoe UI&#x27;, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="400" fill="#57606a" text-anchor="middle">Time-based word</text>
+<text x="632.0" y="454.9" font-family="Inter, -apple-system, &#x27;Segoe UI&#x27;, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="400" fill="#57606a" text-anchor="middle">matching</text>
+<text x="632.0" y="474.9" font-family="Inter, -apple-system, &#x27;Segoe UI&#x27;, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="400" fill="#57606a" text-anchor="middle">Keep agreed words</text>
+<text x="632.0" y="494.9" font-family="Inter, -apple-system, &#x27;Segoe UI&#x27;, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="400" fill="#57606a" text-anchor="middle">Recover missed words</text>
+<text x="632.0" y="514.9" font-family="Inter, -apple-system, &#x27;Segoe UI&#x27;, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="400" fill="#57606a" text-anchor="middle">Remove duplicates</text>
+<rect x="56.0" y="568.0" width="208.0" height="140.0" rx="10" fill="#f6f8fa" stroke="#d0d7de" stroke-width="1.2"/>
+<text x="160.0" y="623.5" font-family="Inter, -apple-system, &#x27;Segoe UI&#x27;, Roboto, Helvetica, Arial, sans-serif" font-size="18" font-weight="600" fill="#1f2328" text-anchor="middle">Parakeet ASR</text>
+<text x="160.0" y="644.9" font-family="Inter, -apple-system, &#x27;Segoe UI&#x27;, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="400" fill="#57606a" text-anchor="middle">Chunked second pass</text>
+<text x="160.0" y="664.9" font-family="Inter, -apple-system, &#x27;Segoe UI&#x27;, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="400" fill="#57606a" text-anchor="middle">Second timed transcript</text>
+<rect x="292.0" y="568.0" width="208.0" height="140.0" rx="10" fill="#f6f8fa" stroke="#d0d7de" stroke-width="1.2"/>
+<text x="396.0" y="622.0" font-family="Inter, -apple-system, &#x27;Segoe UI&#x27;, Roboto, Helvetica, Arial, sans-serif" font-size="18" font-weight="600" fill="#1f2328" text-anchor="middle">Voice activity</text>
+<text x="396.0" y="645.0" font-family="Inter, -apple-system, &#x27;Segoe UI&#x27;, Roboto, Helvetica, Arial, sans-serif" font-size="18" font-weight="600" fill="#1f2328" text-anchor="middle">detection (Silero)</text>
+<text x="396.0" y="666.4" font-family="Inter, -apple-system, &#x27;Segoe UI&#x27;, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="400" fill="#57606a" text-anchor="middle">Speech regions</text>
+<rect x="764.0" y="478.0" width="208.0" height="140.0" rx="10" fill="#f6f8fa" stroke="#d0d7de" stroke-width="1.2"/>
+<text x="868.0" y="533.5" font-family="Inter, -apple-system, &#x27;Segoe UI&#x27;, Roboto, Helvetica, Arial, sans-serif" font-size="18" font-weight="600" fill="#1f2328" text-anchor="middle">Non-speech filter</text>
+<text x="868.0" y="554.9" font-family="Inter, -apple-system, &#x27;Segoe UI&#x27;, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="400" fill="#57606a" text-anchor="middle">VAD and confidence gating</text>
+<text x="868.0" y="574.9" font-family="Inter, -apple-system, &#x27;Segoe UI&#x27;, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="400" fill="#57606a" text-anchor="middle">Drop non-speech tokens</text>
+<polyline points="264.0,458.0 292.0,458.0" fill="none" stroke="#6e7781" stroke-width="2" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<polyline points="500.0,458.0 528.0,458.0" fill="none" stroke="#6e7781" stroke-width="2" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<polyline points="264.0,638.0 280.0,638.0 280.0,548.0 632.0,548.0 632.0,528.0" fill="none" stroke="#6e7781" stroke-width="2" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<polyline points="736.0,458.0 748.0,458.0 748.0,514.0 764.0,514.0" fill="none" stroke="#6e7781" stroke-width="2" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<polyline points="500.0,638.0 748.0,638.0 748.0,582.0 764.0,582.0" fill="none" stroke="#6e7781" stroke-width="2" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<rect x="1020.0" y="336.0" width="324.0" height="396.0" rx="14" fill="#ffffff" stroke="#a6d4cb" stroke-width="1.6"/>
+<rect x="1038.0" y="321.0" width="79.4" height="30.0" rx="15" fill="#157a6e" stroke="#157a6e" stroke-width="1.2"/>
+<text x="1077.7" y="341.5" font-family="Inter, -apple-system, &#x27;Segoe UI&#x27;, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="700" fill="#ffffff" text-anchor="middle" letter-spacing="0.3">Diarize</text>
+<rect x="1040.0" y="388.0" width="284.0" height="140.0" rx="10" fill="#f6f8fa" stroke="#d0d7de" stroke-width="1.2"/>
+<text x="1182.0" y="432.0" font-family="Inter, -apple-system, &#x27;Segoe UI&#x27;, Roboto, Helvetica, Arial, sans-serif" font-size="18" font-weight="600" fill="#1f2328" text-anchor="middle">Diarization (pyannote</text>
+<text x="1182.0" y="455.0" font-family="Inter, -apple-system, &#x27;Segoe UI&#x27;, Roboto, Helvetica, Arial, sans-serif" font-size="18" font-weight="600" fill="#1f2328" text-anchor="middle">community-1)</text>
+<text x="1182.0" y="476.4" font-family="Inter, -apple-system, &#x27;Segoe UI&#x27;, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="400" fill="#57606a" text-anchor="middle">Segmentation, embedding, clustering</text>
+<text x="1182.0" y="496.4" font-family="Inter, -apple-system, &#x27;Segoe UI&#x27;, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="400" fill="#57606a" text-anchor="middle">Fixed or bounded speaker count</text>
+<rect x="1040.0" y="568.0" width="284.0" height="140.0" rx="10" fill="#f6f8fa" stroke="#d0d7de" stroke-width="1.2"/>
+<text x="1182.0" y="603.5" font-family="Inter, -apple-system, &#x27;Segoe UI&#x27;, Roboto, Helvetica, Arial, sans-serif" font-size="18" font-weight="600" fill="#1f2328" text-anchor="middle">Speaker segments</text>
+<text x="1182.0" y="624.9" font-family="Inter, -apple-system, &#x27;Segoe UI&#x27;, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="400" fill="#57606a" text-anchor="middle">Exclusive timeline and overlap</text>
+<text x="1182.0" y="644.9" font-family="Inter, -apple-system, &#x27;Segoe UI&#x27;, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="400" fill="#57606a" text-anchor="middle">regions</text>
+<text x="1182.0" y="664.9" font-family="Inter, -apple-system, &#x27;Segoe UI&#x27;, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="400" fill="#57606a" text-anchor="middle">Speaker IDs with start and end</text>
+<text x="1182.0" y="684.9" font-family="Inter, -apple-system, &#x27;Segoe UI&#x27;, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="400" fill="#57606a" text-anchor="middle">times</text>
+<polyline points="1182.0,528.0 1182.0,568.0" fill="none" stroke="#6e7781" stroke-width="2" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<polyline points="514.0,732.0 514.0,836.0" fill="none" stroke="#6e7781" stroke-width="2" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<polyline points="1182.0,732.0 1182.0,836.0" fill="none" stroke="#6e7781" stroke-width="2" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<rect x="334.4" y="754.0" width="359.2" height="60.0" rx="12" fill="#e7f4f1" stroke="#a6d4cb" stroke-width="1.2"/>
+<text x="514.0" y="778.3" font-family="Inter, -apple-system, &#x27;Segoe UI&#x27;, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="600" fill="#157a6e" text-anchor="middle">Word-level timestamps and pass agreement</text>
+<text x="514.0" y="800.3" font-family="Inter, -apple-system, &#x27;Segoe UI&#x27;, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="400" fill="#57606a" text-anchor="middle">Non-speech markers</text>
+<rect x="1002.7" y="765.0" width="358.6" height="38.0" rx="19.0" fill="#e7f4f1" stroke="#a6d4cb" stroke-width="1.2"/>
+<text x="1182.0" y="789.3" font-family="Inter, -apple-system, &#x27;Segoe UI&#x27;, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="600" fill="#157a6e" text-anchor="middle">Who spoke when, on the common time base</text>
+<rect x="36.0" y="836.0" width="1308.0" height="184.0" rx="14" fill="#ffffff" stroke="#a6d4cb" stroke-width="1.6"/>
+<rect x="54.0" y="821.0" width="64.0" height="30.0" rx="15" fill="#157a6e" stroke="#157a6e" stroke-width="1.2"/>
+<text x="86.0" y="841.5" font-family="Inter, -apple-system, &#x27;Segoe UI&#x27;, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="700" fill="#ffffff" text-anchor="middle" letter-spacing="0.3">Fuse</text>
+<rect x="50.4" y="912.0" width="215.1" height="60.0" rx="12" fill="#e7f4f1" stroke="#a6d4cb" stroke-width="1.2" stroke-dasharray="6 5"/>
+<text x="158.0" y="936.3" font-family="Inter, -apple-system, &#x27;Segoe UI&#x27;, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="600" fill="#157a6e" text-anchor="middle">Audio, word timestamps</text>
+<text x="158.0" y="958.3" font-family="Inter, -apple-system, &#x27;Segoe UI&#x27;, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="600" fill="#157a6e" text-anchor="middle">and speaker segments</text>
+<rect x="296.0" y="888.0" width="314.7" height="108.0" rx="10" fill="#f6f8fa" stroke="#d0d7de" stroke-width="1.2"/>
+<text x="453.3" y="937.5" font-family="Inter, -apple-system, &#x27;Segoe UI&#x27;, Roboto, Helvetica, Arial, sans-serif" font-size="18" font-weight="600" fill="#1f2328" text-anchor="middle">Word–speaker assignment</text>
+<text x="453.3" y="958.9" font-family="Inter, -apple-system, &#x27;Segoe UI&#x27;, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="400" fill="#57606a" text-anchor="middle">Timing overlap</text>
+<rect x="650.7" y="888.0" width="314.7" height="108.0" rx="10" fill="#f6f8fa" stroke="#d0d7de" stroke-width="1.2"/>
+<text x="808.0" y="926.0" font-family="Inter, -apple-system, &#x27;Segoe UI&#x27;, Roboto, Helvetica, Arial, sans-serif" font-size="18" font-weight="600" fill="#1f2328" text-anchor="middle">Boundary refinement and</text>
+<text x="808.0" y="949.0" font-family="Inter, -apple-system, &#x27;Segoe UI&#x27;, Roboto, Helvetica, Arial, sans-serif" font-size="18" font-weight="600" fill="#1f2328" text-anchor="middle">rescoring</text>
+<text x="808.0" y="970.4" font-family="Inter, -apple-system, &#x27;Segoe UI&#x27;, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="400" fill="#57606a" text-anchor="middle">Pause cues and speaker embeddings</text>
+<rect x="1005.3" y="888.0" width="314.7" height="108.0" rx="10" fill="#f6f8fa" stroke="#d0d7de" stroke-width="1.2"/>
+<text x="1162.7" y="937.5" font-family="Inter, -apple-system, &#x27;Segoe UI&#x27;, Roboto, Helvetica, Arial, sans-serif" font-size="18" font-weight="600" fill="#1f2328" text-anchor="middle">Sentence and turn reconstruction</text>
+<text x="1162.7" y="958.9" font-family="Inter, -apple-system, &#x27;Segoe UI&#x27;, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="400" fill="#57606a" text-anchor="middle">Fragment repair, echo removal</text>
+<polyline points="260.0,942.0 296.0,942.0" fill="none" stroke="#6e7781" stroke-width="2" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<polyline points="610.7,942.0 650.7,942.0" fill="none" stroke="#6e7781" stroke-width="2" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<polyline points="965.3,942.0 1005.3,942.0" fill="none" stroke="#6e7781" stroke-width="2" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<polyline points="516.0,1020.0 516.0,1124.0" fill="none" stroke="#6e7781" stroke-width="2" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<rect x="347.1" y="1042.0" width="337.7" height="60.0" rx="12" fill="#e7f4f1" stroke="#a6d4cb" stroke-width="1.2"/>
+<text x="516.0" y="1066.3" font-family="Inter, -apple-system, &#x27;Segoe UI&#x27;, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="600" fill="#157a6e" text-anchor="middle">Speaker-attributed turns with confidence</text>
+<text x="516.0" y="1088.3" font-family="Inter, -apple-system, &#x27;Segoe UI&#x27;, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="400" fill="#57606a" text-anchor="middle">Inter-cluster speaker similarity</text>
+<rect x="36.0" y="1124.0" width="960.0" height="188.0" rx="14" fill="#ffffff" stroke="#bcb8f3" stroke-width="1.6"/>
+<rect x="54.0" y="1109.0" width="68.8" height="30.0" rx="15" fill="#4f46e5" stroke="#4f46e5" stroke-width="1.2"/>
+<text x="88.4" y="1129.5" font-family="Inter, -apple-system, &#x27;Segoe UI&#x27;, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="700" fill="#ffffff" text-anchor="middle" letter-spacing="0.3">Roles</text>
+<rect x="60.0" y="1176.0" width="277.3" height="112.0" rx="10" fill="#f6f8fa" stroke="#d0d7de" stroke-width="1.2"/>
+<text x="198.7" y="1227.5" font-family="Inter, -apple-system, &#x27;Segoe UI&#x27;, Roboto, Helvetica, Arial, sans-serif" font-size="18" font-weight="600" fill="#1f2328" text-anchor="middle">Participant inference</text>
+<text x="198.7" y="1248.9" font-family="Inter, -apple-system, &#x27;Segoe UI&#x27;, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="400" fill="#57606a" text-anchor="middle">Turn content and speaker similarity</text>
+<rect x="377.3" y="1176.0" width="277.3" height="112.0" rx="10" fill="#f6f8fa" stroke="#d0d7de" stroke-width="1.2"/>
+<text x="516.0" y="1216.0" font-family="Inter, -apple-system, &#x27;Segoe UI&#x27;, Roboto, Helvetica, Arial, sans-serif" font-size="18" font-weight="600" fill="#1f2328" text-anchor="middle">Majority vote over 3</text>
+<text x="516.0" y="1239.0" font-family="Inter, -apple-system, &#x27;Segoe UI&#x27;, Roboto, Helvetica, Arial, sans-serif" font-size="18" font-weight="600" fill="#1f2328" text-anchor="middle">samples</text>
+<text x="516.0" y="1260.4" font-family="Inter, -apple-system, &#x27;Segoe UI&#x27;, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="400" fill="#57606a" text-anchor="middle">Vote merge and configured role rules</text>
+<rect x="694.7" y="1176.0" width="277.3" height="112.0" rx="10" fill="#f6f8fa" stroke="#d0d7de" stroke-width="1.2"/>
+<text x="833.3" y="1227.5" font-family="Inter, -apple-system, &#x27;Segoe UI&#x27;, Roboto, Helvetica, Arial, sans-serif" font-size="18" font-weight="600" fill="#1f2328" text-anchor="middle">Fragment repair</text>
+<text x="833.3" y="1248.9" font-family="Inter, -apple-system, &#x27;Segoe UI&#x27;, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="400" fill="#57606a" text-anchor="middle">Unknown when evidence is weak</text>
+<polyline points="337.3,1232.0 377.3,1232.0" fill="none" stroke="#6e7781" stroke-width="2" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<polyline points="654.7,1232.0 694.7,1232.0" fill="none" stroke="#6e7781" stroke-width="2" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<rect x="1032.0" y="1124.0" width="312.0" height="72.0" rx="10" fill="#ecebfc" stroke="#bcb8f3" stroke-width="1.2"/>
+<text x="1188.0" y="1155.5" font-family="Inter, -apple-system, &#x27;Segoe UI&#x27;, Roboto, Helvetica, Arial, sans-serif" font-size="18" font-weight="600" fill="#1f2328" text-anchor="middle">LLM endpoint</text>
+<text x="1188.0" y="1176.9" font-family="Inter, -apple-system, &#x27;Segoe UI&#x27;, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="400" fill="#57606a" text-anchor="middle">vLLM or OpenAI-compatible API</text>
+<rect x="1032.0" y="1216.0" width="312.0" height="96.0" rx="10" fill="#ecebfc" stroke="#bcb8f3" stroke-width="1.2"/>
+<text x="1188.0" y="1259.5" font-family="Inter, -apple-system, &#x27;Segoe UI&#x27;, Roboto, Helvetica, Arial, sans-serif" font-size="18" font-weight="600" fill="#1f2328" text-anchor="middle">Role definitions (config/roles)</text>
+<text x="1188.0" y="1280.9" font-family="Inter, -apple-system, &#x27;Segoe UI&#x27;, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="400" fill="#57606a" text-anchor="middle">Name, aliases, description</text>
+<polyline points="1032.0,1160.0 996.0,1160.0" fill="none" stroke="#6e7781" stroke-width="2" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<polyline points="1032.0,1264.0 996.0,1264.0" fill="none" stroke="#6e7781" stroke-width="2" stroke-linejoin="round" stroke-dasharray="6 5" marker-end="url(#arrow)"/>
+<polyline points="516.0,1312.0 516.0,1416.0" fill="none" stroke="#6e7781" stroke-width="2" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<rect x="373.9" y="1334.0" width="284.1" height="60.0" rx="12" fill="#ecebfc" stroke="#bcb8f3" stroke-width="1.2"/>
+<text x="516.0" y="1358.3" font-family="Inter, -apple-system, &#x27;Segoe UI&#x27;, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="600" fill="#4f46e5" text-anchor="middle">Role-labelled turns with evidence</text>
+<text x="516.0" y="1380.3" font-family="Inter, -apple-system, &#x27;Segoe UI&#x27;, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="400" fill="#57606a" text-anchor="middle">Cluster-level roles and confidence</text>
+<rect x="36.0" y="1416.0" width="900.0" height="234.0" rx="14" fill="#ffffff" stroke="#bcb8f3" stroke-width="1.6"/>
+<rect x="54.0" y="1401.0" width="78.1" height="30.0" rx="15" fill="#4f46e5" stroke="#4f46e5" stroke-width="1.2"/>
+<text x="93.0" y="1421.5" font-family="Inter, -apple-system, &#x27;Segoe UI&#x27;, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="700" fill="#ffffff" text-anchor="middle" letter-spacing="0.3">Render</text>
+<rect x="60.0" y="1493.0" width="270.0" height="108.0" rx="10" fill="#f6f8fa" stroke="#d0d7de" stroke-width="1.2"/>
+<text x="195.0" y="1532.5" font-family="Inter, -apple-system, &#x27;Segoe UI&#x27;, Roboto, Helvetica, Arial, sans-serif" font-size="18" font-weight="600" fill="#1f2328" text-anchor="middle">Minute-level grouping</text>
+<text x="195.0" y="1553.9" font-family="Inter, -apple-system, &#x27;Segoe UI&#x27;, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="400" fill="#57606a" text-anchor="middle">Line joining and splitting</text>
+<text x="195.0" y="1573.9" font-family="Inter, -apple-system, &#x27;Segoe UI&#x27;, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="400" fill="#57606a" text-anchor="middle">Role confidence threshold</text>
+<rect x="349.7" y="1517.0" width="332.6" height="60.0" rx="12" fill="#ecebfc" stroke="#bcb8f3" stroke-width="1.2"/>
+<text x="367.7" y="1541.3" font-family="Inter, -apple-system, &#x27;Segoe UI&#x27;, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="600" fill="#4f46e5" text-anchor="start">Plain-text transcript</text>
+<text x="544.2" y="1541.3" font-family="Inter, -apple-system, &#x27;Segoe UI&#x27;, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="600" fill="#4f46e5" text-anchor="start">Canonical JSON</text>
+<text x="516.0" y="1563.3" font-family="Inter, -apple-system, &#x27;Segoe UI&#x27;, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="400" fill="#57606a" text-anchor="middle">Word timestamps and speaker evidence</text>
+<rect x="702.0" y="1499.0" width="210.0" height="96.0" rx="10" fill="#f6f8fa" stroke="#d0d7de" stroke-width="1.2"/>
+<text x="807.0" y="1531.0" font-family="Inter, -apple-system, &#x27;Segoe UI&#x27;, Roboto, Helvetica, Arial, sans-serif" font-size="18" font-weight="600" fill="#1f2328" text-anchor="middle">Speaker-attributed</text>
+<text x="807.0" y="1554.0" font-family="Inter, -apple-system, &#x27;Segoe UI&#x27;, Roboto, Helvetica, Arial, sans-serif" font-size="18" font-weight="600" fill="#1f2328" text-anchor="middle">transcript</text>
+<text x="807.0" y="1575.4" font-family="Inter, -apple-system, &#x27;Segoe UI&#x27;, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="400" fill="#57606a" text-anchor="middle">Text and canonical JSON</text>
+<polyline points="330.0,1547.0 349.7,1547.0" fill="none" stroke="#6e7781" stroke-width="2" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<polyline points="682.3,1547.0 702.0,1547.0" fill="none" stroke="#6e7781" stroke-width="2" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<rect x="976.0" y="1416.0" width="368.0" height="234.0" rx="14" fill="#ffffff" stroke="#efc68f" stroke-width="1.6"/>
+<rect x="994.0" y="1401.0" width="82.6" height="30.0" rx="15" fill="#b45309" stroke="#b45309" stroke-width="1.2"/>
+<text x="1035.3" y="1421.5" font-family="Inter, -apple-system, &#x27;Segoe UI&#x27;, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="700" fill="#ffffff" text-anchor="middle" letter-spacing="0.3">Review</text>
+<rect x="1000.0" y="1468.0" width="320.0" height="80.0" rx="10" fill="#f6f8fa" stroke="#d0d7de" stroke-width="1.2"/>
+<text x="1160.0" y="1503.5" font-family="Inter, -apple-system, &#x27;Segoe UI&#x27;, Roboto, Helvetica, Arial, sans-serif" font-size="18" font-weight="600" fill="#1f2328" text-anchor="middle">Manual correction</text>
+<text x="1160.0" y="1524.9" font-family="Inter, -apple-system, &#x27;Segoe UI&#x27;, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="400" fill="#57606a" text-anchor="middle">Text and speaker labels</text>
+<polyline points="1160.0,1548.0 1160.0,1572.0" fill="none" stroke="#6e7781" stroke-width="2" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<rect x="1066.1" y="1570.0" width="187.8" height="60.0" rx="12" fill="#fdf2e3" stroke="#efc68f" stroke-width="1.2"/>
+<text x="1160.0" y="1594.3" font-family="Inter, -apple-system, &#x27;Segoe UI&#x27;, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="600" fill="#b45309" text-anchor="middle">Revision history</text>
+<text x="1160.0" y="1616.3" font-family="Inter, -apple-system, &#x27;Segoe UI&#x27;, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="400" fill="#57606a" text-anchor="middle">Export as text or ZIP</text>
+<polyline points="936.0,1547.0 976.0,1547.0" fill="none" stroke="#6e7781" stroke-width="2" stroke-linejoin="round" marker-end="url(#arrow)"/>
+</svg>
