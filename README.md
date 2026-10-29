@@ -78,7 +78,7 @@ key empty if the server allows unauthenticated requests.
 ./scripts/webui.sh
 ```
 
-Open the URL printed by the launcher, then choose **Import Audio**,
+Open the URL printed by the launcher, then choose **Import**,
 **Run Selected**, and **Review**.
 
 The CLI accepts files or directories. With no path, it uses `data/input/`
@@ -95,8 +95,10 @@ and creates the folder if needed:
 ./scripts/run.sh --help
 ```
 
-Keep intermediate files to open CLI results in the editor. If an LLM request
-fails, the audio results are saved. Use `--resume` or **Resume** to continue.
+The editor opens CLI results from `data/output/`. If the audio is not in
+`data/input/`, keep intermediate files so that playback works. If an LLM
+request fails, the audio results are saved. Use `--resume` or **Resume** to
+continue.
 
 | CLI option | Purpose |
 |------------|---------|
@@ -162,6 +164,25 @@ data/intermediate/<name>/
 The text transcript groups speech into minute blocks. The canonical JSON
 contains word timings, speaker assignments, and role decisions. Editor
 changes are recorded in the revision files.
+
+## Move recordings between machines
+
+A bundle is a ZIP file with recordings, their audio, working files,
+transcripts, and review history. Use bundles to process recordings on one
+machine and review them on a different machine, or to continue a review
+on a different machine.
+
+```bash
+python3 src/bundle.py export --all -o visits.zip        # all processed recordings
+python3 src/bundle.py export visit follow_up -o two.zip # recordings by name
+python3 src/bundle.py import visits.zip                 # --replace overwrites
+```
+
+In the editor, **Import** accepts audio files and bundles. **Export Bundle**
+saves open edits, then downloads the selected recordings as one bundle. If a
+recording is already on the machine, the editor asks before it replaces the
+local copy. A ZIP of a `data/` folder also imports. The bundle command needs
+only the Python standard library.
 
 ## Authors
 

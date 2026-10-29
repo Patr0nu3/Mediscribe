@@ -167,6 +167,61 @@ class WebUIEditorTests(unittest.TestCase):
         self.assertEqual(saved["size"], len(b"new-audio"))
         self.assertFalse(saved["duplicate"])
 
+    def test_store_moves_a_reviewed_session_between_machines_as_a_bundle(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            source = WEBUI.EditorStore(root / "a")
+            (source.input_root).mkdir(parents=True)
+            (source.input_root / "visit.wav").write_bytes(b"audio")
+            source.save_session("visit", {
+                "turns": [{"id": "t1", "speaker": "Clinician", "text": "Hello there.", "start_sec": 0, "end_sec": 1}],
+                "finished": True,
+            })
+            bundle_path = source.export_bundle_file(["visit"])
+            payload = bundle_path.read_bytes()
+            bundle_path.unlink()
+
+            target = WEBUI.EditorStore(root / "b")
+            result = target.import_bundle_upload(io.BytesIO(payload), len(payload))
+            with self.assertRaises(WEBUI.BundleConflictError):
+                target.import_bundle_upload(io.BytesIO(payload), len(payload))
+            session = target.load_session("visit")
+            listed = target.list_sessions()
+            leftovers = list(target.data_root.glob(".bundle-*"))
+
+        self.assertEqual(result["sessions"], ["visit"])
+        self.assertTrue(session["finished"])
+        self.assertTrue(session["audio"]["available"])
+        self.assertEqual(session["turns"][0]["text"], "Hello there.")
+        self.assertEqual(listed[0]["state"], "ready")
+        self.assertEqual(leftovers, [])
+
+    def test_session_without_intermediate_files_loads_canonical_turns(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            store = WEBUI.EditorStore(Path(tmpdir))
+            paths = store.paths_for("visit")
+            paths.output_dir.mkdir(parents=True)
+            paths.final_txt.write_text("[00:00]\nClinician: Hello there.\n", encoding="utf-8")
+            turn = {
+                "id": "turn_0",
+                "start_sec": 1.5,
+                "end_sec": 2.5,
+                "text": "Hello there.",
+                "final_role": "Clinician",
+                "final_role_confidence": 0.9,
+                "words": [
+                    {"word": "Hello", "start_sec": 1.5, "end_sec": 1.9},
+                    {"word": "there.", "start_sec": 2.0, "end_sec": 2.5},
+                ],
+            }
+            paths.canonical_json.write_text(json.dumps({"role_assignment": {"turns": [turn]}}), encoding="utf-8")
+
+            turns = store.load_turns(paths)
+
+        self.assertEqual(len(turns), 1)
+        self.assertEqual(turns[0]["start_sec"], 1.5)
+        self.assertEqual([word["start_sec"] for word in turns[0]["words"]], [1.5, 2.0])
+
     def test_store_skips_byte_identical_audio_already_imported(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)

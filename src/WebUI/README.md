@@ -25,7 +25,8 @@ Run `./scripts/webui.sh --help` to see all server options.
 ## Recordings and processing
 
 **Dashboard** lists imported recordings and processed sessions. Select
-recordings to run, reprocess, export, or remove them.
+recordings to run, reprocess, export, or remove them. **Import** accepts
+audio files and Mediscribe bundles (`.zip`).
 
 <p align="center">
   <img src="../../docs/screenshots/dashboard.png" alt="Recording list with processing and review states" width="820">
@@ -99,13 +100,19 @@ editor to load the changes.
 ## Sessions and exports
 
 The editor loads sessions from `data/intermediate/` and `data/output/`, using
-saved editor state, pipeline JSON, or the final text transcript. Run the CLI
-with `--keep-intermediate --debug-json` to retain audio and word timings for review.
+saved editor state, pipeline JSON, canonical JSON, or the final text
+transcript. If the audio is not in `data/input/`, run the CLI with
+`--keep-intermediate` to keep a playable copy.
 
 **Save** writes editor state, the text transcript, and revision history.
 **Finish** marks review complete. **Export** downloads one transcript.
 **Export Selected** downloads a ZIP archive. The canonical pipeline JSON is
 preserved.
+
+**Export Bundle** downloads the selected recordings with audio, working
+files, transcripts, and review history. Import the bundle on a different
+machine to continue the review there. If a recording is already on that
+machine, the editor asks before it replaces the local copy.
 
 **Diff** lists each manual save and autosave. Select one to compare the
 transcript before and after it, or select **Baseline to Latest** to compare

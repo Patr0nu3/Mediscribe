@@ -14,6 +14,7 @@ import re
 import shutil
 import subprocess
 import sys
+import tempfile
 import threading
 import time
 import uuid
@@ -27,6 +28,7 @@ from urllib.parse import parse_qs, quote, unquote, urlparse
 
 # The editor shares the pipeline's text helpers and transcript line grammar.
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from mediscribe_v2.bundle import BundleConflictError, export_bundle, import_bundle  # noqa: E402
 from mediscribe_v2.common import (  # noqa: E402
     LLM_API_KEY_DEFAULT,
     LLM_BASE_URL_DEFAULT,
@@ -803,6 +805,7 @@ class SessionPaths:
     debug_json: Path
     aligned_json: Path
     final_txt: Path
+    canonical_json: Path
     revisions_jsonl: Path
     revision_snapshots: Path
     pipeline_state: Path
@@ -828,6 +831,7 @@ class EditorStore:
             debug_json=intermediate_dir / f"{session_name}_debug.json",
             aligned_json=intermediate_dir / f"{session_name}_sen_aligned_segments.json",
             final_txt=output_dir / f"{session_name}_aligned_transcript.txt",
+            canonical_json=output_dir / f"{session_name}_canonical.json",
             revisions_jsonl=output_dir / f"{session_name}_revisions.jsonl",
             revision_snapshots=output_dir / f"{session_name}_revision_snapshots.json",
             pipeline_state=intermediate_dir / f"{session_name}_pipeline_state.json",
@@ -896,7 +900,10 @@ class EditorStore:
         return None
 
     def session_files_exist(self, paths: SessionPaths) -> bool:
-        return any(path.exists() for path in (paths.editor_json, paths.debug_json, paths.aligned_json, paths.final_txt))
+        return any(
+            path.exists()
+            for path in (paths.editor_json, paths.debug_json, paths.aligned_json, paths.canonical_json, paths.final_txt)
+        )
 
     def list_sessions(self) -> list[dict[str, Any]]:
         names: set[str] = set()
@@ -915,6 +922,7 @@ class EditorStore:
                 paths.debug_json,
                 paths.aligned_json,
                 paths.final_txt,
+                paths.canonical_json,
                 paths.revisions_jsonl,
                 paths.revision_snapshots,
                 paths.pipeline_state,
@@ -1162,6 +1170,15 @@ class EditorStore:
             if isinstance(payload, list) and payload:
                 return [coerce_turn(turn, index) for index, turn in enumerate(payload)]
 
+        # A run without --keep-intermediate leaves only output/; the canonical
+        # evidence still holds the timed, role-labelled turns.
+        if paths.canonical_json.exists():
+            payload = read_json_or_default(paths.canonical_json, {})
+            assignment = payload.get("role_assignment") if isinstance(payload, dict) else None
+            turns = assignment.get("turns") if isinstance(assignment, dict) else None
+            if isinstance(turns, list) and turns:
+                return [coerce_turn(turn, index) for index, turn in enumerate(turns)]
+
         if paths.final_txt.exists():
             return parse_transcript_text(paths.final_txt)
 
@@ -1378,6 +1395,43 @@ class EditorStore:
         filename = "mediscribe_selected_aligned_transcripts.zip" if selected_names else "mediscribe_finished_aligned_transcripts.zip"
         return filename, buffer.getvalue(), count
 
+    def export_bundle_file(self, names: list[str]) -> Path:
+        """Write the recordings to a temporary bundle zip; the caller removes it."""
+        session_names = [safe_session_name(name) for name in names if clean_text(name)]
+        if not session_names:
+            raise ValueError("Select at least one recording to export.")
+        self.data_root.mkdir(parents=True, exist_ok=True)
+        handle = tempfile.NamedTemporaryFile(dir=self.data_root, prefix=".bundle-export-", suffix=".zip", delete=False)
+        path = Path(handle.name)
+        try:
+            with handle:
+                export_bundle(self.data_root, session_names, handle)
+        except Exception:
+            path.unlink(missing_ok=True)
+            raise
+        return path
+
+    def import_bundle_upload(
+        self, stream: Any, content_length: int, *, replace: bool = False, busy: set[str] | None = None
+    ) -> dict[str, Any]:
+        """Receive an uploaded bundle zip and unpack it into the data folder."""
+        if content_length <= 0:
+            raise ValueError("Uploaded bundle is empty.")
+        self.data_root.mkdir(parents=True, exist_ok=True)
+        temp_target = self.data_root / f".bundle-upload-{uuid.uuid4().hex}.zip"
+        try:
+            with temp_target.open("xb") as handle:
+                remaining = content_length
+                while remaining > 0:
+                    chunk = stream.read(min(UPLOAD_CHUNK_SIZE, remaining))
+                    if not chunk:
+                        raise ClientDisconnected()
+                    handle.write(chunk)
+                    remaining -= len(chunk)
+            return import_bundle(self.data_root, temp_target, replace=replace, busy=busy or set())
+        finally:
+            temp_target.unlink(missing_ok=True)
+
     def clear_selected(self, names: list[str]) -> dict[str, Any]:
         if not names:
             raise ValueError("Select at least one recording to clear.")
@@ -1589,6 +1643,10 @@ class PipelineRunner:
             "active_files": len(active),
             "last_exit": self.worker_last_exit,
         }
+
+    def active_names(self) -> set[str]:
+        with self.lock:
+            return {name for name, entry in self.files.items() if entry.active}
 
     def status_dict(self) -> dict[str, Any]:
         with self.lock:
@@ -2045,6 +2103,10 @@ class WebUIRequestHandler(BaseHTTPRequestHandler):
                 self.send_json({"sessions": self.store.list_sessions(), "role_options": list(DEFAULT_SPEAKERS)})
                 return
 
+            if path == "/api/sessions/bundle.zip":
+                self.send_bundle(parse_qs(parsed.query).get("name", []))
+                return
+
             if path == "/api/sessions/final-transcripts.zip":
                 names_param = parse_qs(parsed.query).get("names", [""])[0]
                 names = [name for name in names_param.split(",") if clean_text(name)]
@@ -2099,6 +2161,25 @@ class WebUIRequestHandler(BaseHTTPRequestHandler):
                         )
                     }
                 )
+            except ValueError as exc:
+                self.send_error_json(str(exc), status=400)
+            except ClientDisconnected:
+                self.handle_client_disconnect()
+            except Exception as exc:
+                self.send_error_json(f"Internal server error: {exc}", status=500)
+            return
+
+        if parsed.path == "/api/bundles/import":
+            try:
+                query = parse_qs(parsed.query)
+                replace = clean_text(query.get("replace", [""])[0]).lower() in {"1", "true", "yes"}
+                content_length = int(self.headers.get("Content-Length", "0"))
+                result = self.store.import_bundle_upload(
+                    self.rfile, content_length, replace=replace, busy=self.runner.active_names()
+                )
+                self.send_json({"bundle": result})
+            except BundleConflictError as exc:
+                self.send_json({"error": str(exc), "conflicts": exc.names}, status=409)
             except ValueError as exc:
                 self.send_error_json(str(exc), status=400)
             except ClientDisconnected:
@@ -2192,6 +2273,18 @@ class WebUIRequestHandler(BaseHTTPRequestHandler):
         except (BrokenPipeError, ConnectionResetError) as exc:
             raise ClientDisconnected() from exc
 
+    def send_bundle(self, names: list[str]) -> None:
+        busy = sorted({clean_text(name) for name in names} & self.runner.active_names())
+        if busy:
+            raise ValueError(f"Wait for processing to finish: {', '.join(busy)}.")
+        path = self.store.export_bundle_file(names)
+        try:
+            unique = list(dict.fromkeys(names))
+            filename = f"{unique[0]}_bundle.zip" if len(unique) == 1 else "mediscribe_bundle.zip"
+            self.send_file(path, download_name=filename)
+        finally:
+            path.unlink(missing_ok=True)
+
     def send_finished_transcripts_zip(self, names: list[str] | None = None) -> None:
         filename, body, count = self.store.finished_final_transcripts_zip(names)
         safe_filename = filename.replace('"', "_")
@@ -2206,7 +2299,7 @@ class WebUIRequestHandler(BaseHTTPRequestHandler):
         except (BrokenPipeError, ConnectionResetError) as exc:
             raise ClientDisconnected() from exc
 
-    def send_file(self, path: Path, *, cache_control: str | None = None) -> None:
+    def send_file(self, path: Path, *, cache_control: str | None = None, download_name: str | None = None) -> None:
         file_size = path.stat().st_size
         content_type = mimetypes.guess_type(path.name)[0] or "application/octet-stream"
         range_header = self.headers.get("Range")
@@ -2241,6 +2334,12 @@ class WebUIRequestHandler(BaseHTTPRequestHandler):
             self.send_header("Content-Length", str(length))
             if cache_control:
                 self.send_header("Cache-Control", cache_control)
+            if download_name:
+                fallback = download_name.encode("ascii", "replace").decode("ascii").replace('"', "_").replace("?", "_")
+                self.send_header(
+                    "Content-Disposition",
+                    f"attachment; filename=\"{fallback}\"; filename*=UTF-8''{quote(download_name, safe='')}",
+                )
             if status == 206:
                 self.send_header("Content-Range", f"bytes {start}-{end}/{file_size}")
             self.end_headers()

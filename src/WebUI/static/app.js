@@ -94,6 +94,7 @@ const els = {
   toggleFinished: document.getElementById("toggleFinished"),
   exportTranscript: document.getElementById("exportTranscript"),
   exportAllFinished: document.getElementById("exportAllFinished"),
+  exportBundle: document.getElementById("exportBundle"),
   selectAllRecordings: document.getElementById("selectAllRecordings"),
   clearRecordingSelection: document.getElementById("clearRecordingSelection"),
   runSelectedRecordings: document.getElementById("runSelectedRecordings"),
@@ -1479,6 +1480,9 @@ function updateFinishedControls() {
   els.exportAllFinished.textContent = selectedFinishedCount
     ? `Export Selected (${selectedFinishedCount})`
     : "Export Selected";
+  const selectedBundleCount = bundleableRecordings().length;
+  els.exportBundle.disabled = selectedBundleCount === 0;
+  els.exportBundle.textContent = selectedBundleCount ? `Export Bundle (${selectedBundleCount})` : "Export Bundle";
   els.clearCache.disabled = selectedCount === 0;
   els.clearCache.textContent = selectedCount ? `Clear Selected (${selectedCount})` : "Clear Selected";
   const selectedRunCount = runnableSelectedRecordings().length;
@@ -5891,23 +5895,72 @@ async function confirmDuplicateImports(duplicates) {
   return duplicates.map((entry) => entry.file).filter((file) => chosen.has(file));
 }
 
-async function uploadAudioFiles(files) {
-  const audioFiles = Array.from(files || []);
-  if (!audioFiles.length) return;
+function isBundleFile(file) {
+  return /\.zip$/i.test(file?.name || "");
+}
 
-  let lastImported = null;
+// Resolves to the import result, or to { conflicts } when recordings with the
+// same names already exist and replace was not requested.
+async function uploadBundle(file, { replace = false } = {}) {
+  const query = `filename=${encodeURIComponent(file.name)}${replace ? "&replace=1" : ""}`;
+  const response = await fetch(`/api/bundles/import?${query}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/zip" },
+    body: file,
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (response.status === 409 && Array.isArray(payload.conflicts)) return { conflicts: payload.conflicts };
+  if (!response.ok) throw new Error(payload.error || `Request failed: ${response.status}`);
+  return payload.bundle || {};
+}
+
+async function importBundle(file) {
+  const result = await uploadBundle(file);
+  if (!result.conflicts) return result;
+  const names = result.conflicts;
+  const listed = names.slice(0, 3).join(", ") + (names.length > 3 ? ` and ${names.length - 3} more` : "");
+  const dirtyWarning = state.dirty && names.includes(state.sessionName) ? " Unsaved editor changes will be lost." : "";
+  const confirmed = await showModal({
+    title: "Replace Recordings",
+    message: `${file.name} holds ${names.length} recording${names.length === 1 ? "" : "s"} that already ${names.length === 1 ? "exists" : "exist"} here (${listed}). Replace the local copy, review edits included, with the bundle copy?${dirtyWarning}`,
+    confirmText: "Replace",
+    cancelText: "Skip",
+    danger: true,
+  });
+  if (!confirmed) return null;
+  if (names.includes(state.sessionName)) {
+    // An autosave after the import would write the old edits over the bundle copy.
+    window.clearTimeout(state.autosaveTimer);
+    state.dirty = false;
+  }
+  return uploadBundle(file, { replace: true });
+}
+
+async function importFiles(files) {
+  const picked = Array.from(files || []);
+  if (!picked.length) return;
+
+  let preferredKey = "";
   const duplicates = [];
-  for (const file of audioFiles) {
+  for (const file of picked.filter((candidate) => !isBundleFile(candidate))) {
     const info = await uploadAudioFile(file);
     if (info.duplicate) duplicates.push({ file, existing: info });
-    else lastImported = info;
+    else preferredKey = recordingNameForInput(info);
   }
 
   for (const file of await confirmDuplicateImports(duplicates)) {
-    lastImported = await uploadAudioFile(file, { allowDuplicate: true });
+    preferredKey = recordingNameForInput(await uploadAudioFile(file, { allowDuplicate: true }));
   }
 
-  const preferredKey = lastImported ? recordingNameForInput(lastImported) : "";
+  let replacedOpenSession = false;
+  for (const file of picked.filter(isBundleFile)) {
+    const result = await importBundle(file);
+    if (!result?.sessions?.length) continue;
+    preferredKey = result.sessions[result.sessions.length - 1];
+    if ((result.replaced || []).includes(state.sessionName)) replacedOpenSession = true;
+  }
+
+  if (replacedOpenSession) await loadSession(state.sessionName);
   await refreshRecordings({ preferredKey, openSelected: false });
 }
 
@@ -5942,6 +5995,27 @@ async function exportAllFinished() {
   const names = finished.map((recording) => recording.name).join(",");
   link.href = `/api/sessions/final-transcripts.zip?names=${encodeURIComponent(names)}&v=${Date.now()}`;
   link.download = "mediscribe_selected_aligned_transcripts.zip";
+  document.body.append(link);
+  link.click();
+  link.remove();
+}
+
+function bundleableRecordings(recordings = selectedRecordings()) {
+  return recordings.filter((recording) => (
+    recordingHasProcessedFiles(recording) && !recordingIsRunning(recording) && !recordingIsQueued(recording)
+  ));
+}
+
+async function exportBundle() {
+  if (state.dirty) {
+    await saveSession();
+  }
+  const recordings = bundleableRecordings();
+  if (!recordings.length) return;
+  const link = document.createElement("a");
+  const query = recordings.map((recording) => `name=${encodeURIComponent(recording.name)}`).join("&");
+  link.href = `/api/sessions/bundle.zip?${query}&v=${Date.now()}`;
+  link.download = recordings.length === 1 ? `${recordings[0].name}_bundle.zip` : "mediscribe_bundle.zip";
   document.body.append(link);
   link.click();
   link.remove();
@@ -6504,7 +6578,7 @@ els.reprocessSelectedInProcessing.addEventListener("click", () => {
   reprocessRecordings().catch((error) => setPipelineStatus(error.message));
 });
 els.audioImport.addEventListener("change", () => {
-  uploadAudioFiles(els.audioImport.files)
+  importFiles(els.audioImport.files)
     .catch((error) => showErrorNotice(error))
     .finally(() => {
       els.audioImport.value = "";
@@ -6525,6 +6599,7 @@ els.saveButton.addEventListener("click", () => saveSession().catch((error) => sh
 els.toggleFinished.addEventListener("click", () => toggleFinished().catch((error) => showErrorNotice(error)));
 els.exportTranscript.addEventListener("click", () => exportTranscript().catch((error) => showErrorNotice(error)));
 els.exportAllFinished.addEventListener("click", () => exportAllFinished().catch((error) => showErrorNotice(error)));
+els.exportBundle.addEventListener("click", () => exportBundle().catch((error) => showErrorNotice(error)));
 els.showRevisions.addEventListener("click", () => toggleRevisionPanel().catch((error) => showErrorNotice(error)));
 els.restoreRevisionBefore.addEventListener("click", () => restoreSelectedRevisionSide("before"));
 els.restoreRevisionAfter.addEventListener("click", () => restoreSelectedRevisionSide("after"));

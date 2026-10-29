@@ -16,7 +16,7 @@
           <div class="brand">Mediscribe</div>
           <div class="brand-subtitle">Transcript Editor</div>
         </div>
-        <input id="audioImport" class="hidden-file-input" type="file" accept="audio/*,.m4a,.mp3,.wav,.flac,.aac,.ogg,.webm,.mp4" multiple>
+        <input id="audioImport" class="hidden-file-input" type="file" accept="audio/*,.m4a,.mp3,.wav,.flac,.aac,.ogg,.webm,.mp4,.zip,application/zip" multiple>
       </header>
 
       <nav class="app-tabs" aria-label="Mediscribe workspace">
@@ -36,20 +36,21 @@
             <div id="dashboardStats" class="dashboard-stats" aria-label="Recording summary"></div>
           </div>
           <div class="dashboard-actions">
-            <button id="importAudioButton" class="primary-button" type="button">Import Audio</button>
+            <button id="importAudioButton" class="primary-button" type="button" title="Import audio recordings or Mediscribe bundles (.zip)">Import</button>
             <button id="selectAllRecordings" type="button">Select All</button>
             <button id="clearRecordingSelection" type="button">Clear Selection</button>
             <button id="runSelectedRecordings" type="button">Run Selected</button>
             <button id="reprocessSelectedRecordings" type="button">Reprocess Selected</button>
             <button id="exportAllFinished" type="button">Export Selected</button>
+            <button id="exportBundle" type="button" title="Save the selected recordings with audio, working files, and review edits as one zip for another machine">Export Bundle</button>
             <button id="refreshSessions" type="button">Refresh</button>
             <button id="clearCache" class="danger-button" type="button">Clear Selected</button>
           </div>
           <div id="recordingTable" class="recording-table" role="table" aria-label="Recordings"></div>
           <div id="dashboardEmpty" class="empty-state onboarding" hidden>
             <strong>No recordings yet</strong>
-            <p>Import an audio recording to begin.</p>
-            <button id="importAudioEmpty" class="primary-button" type="button">Import Audio</button>
+            <p>Import an audio recording or a Mediscribe bundle (.zip) to begin.</p>
+            <button id="importAudioEmpty" class="primary-button" type="button">Import</button>
           </div>
         </section>
 
